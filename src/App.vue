@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <Header :tabs="tabs" :currentTab.sync="currentTab"/>
     <img alt="Vue logo" src="./assets/logo.png">
     <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
   </div>
@@ -8,22 +9,28 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import HelloWorld from './components/HelloWorld.vue';
+import Header from './components/Header.vue';
 
 @Component({
   components: {
     HelloWorld,
+    Header,
   },
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  private tabs = ['My Tasks', 'In Progress', 'Completed']
+
+  private currentTab = ''
+
+  created() {
+    [this.currentTab] = this.tabs;
+  }
+}
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+body {
+  margin: 0;
+  background: #E1E1E1;
 }
 </style>
