@@ -1,5 +1,5 @@
 <template>
-  <li class="tl-task">
+  <li class="tl-task" :class="{'tl-task--open': isEdit}">
     <div class="tl-task__header">
       <CheckBox @change.native="changeFinished" :value="isFinished"/>
       <input
@@ -29,6 +29,35 @@
         @click="isEdit = !isEdit"
       />
     </div>
+    <div class="tl-task__content">
+      <div class="tl-task__content__wrapper">
+        <div class="tl-task__content__wrapper__comment">
+          <font-awesome-icon :icon="['far', 'comment-dots']"/>
+          Comment
+        </div>
+        <textarea
+          ref="textarea"
+          class="tl-task__content__wrapper__area"
+          :value="description"
+        ></textarea>
+      </div>
+      <div class="tl-task__content__action">
+        <button
+          class="tl-task__content__action__button tl-task__content__action__button__cancel"
+          @click="cancel"
+        >
+          <font-awesome-icon class="tl-task__content__action__button__icon" icon="times"/>
+          Cancel
+        </button>
+        <button
+          class="tl-task__content__action__button tl-task__content__action__button__save"
+          @click="save"
+        >
+          <font-awesome-icon class="tl-task__content__action__button__icon" icon="plus"/>
+          Save
+        </button>
+      </div>
+    </div>
   </li>
 </template>
 
@@ -42,7 +71,11 @@ import CheckBox from './CheckBox.vue';
   },
 })
 export default class Task extends Vue {
+  @Prop() private id!: string;
+
   @Prop() private title!: string;
+
+  @Prop() private description!: string;
 
   @Prop() private isFavorite!: boolean;
 
@@ -50,16 +83,25 @@ export default class Task extends Vue {
 
   private isEdit = false;
 
-  public changeFavorite(isFavorite: boolean) {
-    this.$emit('update:isFavorite', isFavorite);
+  private changeFavorite(isFavorite: boolean) {
+    this.$emit('update:attribute', this.id, 'isFavorite', isFavorite);
   }
 
   private changeFinished(event: any) {
-    this.$emit('update:isFinished', event.target.checked);
+    this.$emit('update:attribute', this.id, 'isFinished', event.target.checked);
   }
 
   private changeTitle(event: any) {
-    this.$emit('update:title', event.target.value);
+    this.$emit('update:attribute', this.id, 'title', event.target.value);
+  }
+
+  private cancel() {
+    this.isEdit = false;
+  }
+
+  private save() {
+    this.isEdit = false;
+    this.$emit('update:attribute', this.id, 'description', this.$refs.textarea.value);
   }
 }
 </script>
@@ -70,9 +112,14 @@ export default class Task extends Vue {
     max-width: 620px;
     overflow: hidden;
     border-radius: 5px;
+    height: 76px;
+    transition: height 0.4s;
+
+    &--open {
+      height: 346px;
+    }
 
     &__header {
-      box-sizing: border-box;
       display: flex;
       align-items: center;
       height: 76px;
@@ -85,7 +132,6 @@ export default class Task extends Vue {
       }
 
       &__title {
-        box-sizing: border-box;
         font-family: Roboto-Medium;
         font-size: 24px;
         color: black;
@@ -119,6 +165,71 @@ export default class Task extends Vue {
 
         &--active {
           color: #4A90E2;
+        }
+      }
+    }
+
+    &__content {
+      display: flex;
+      flex-direction: column;
+      height: 270px;
+      width: 100%;
+      background: #F2F2F2;
+      border-top: 2px solid #C8C8C8;
+
+      &__wrapper {
+        height: 100%;
+        padding: 24px 72px 0;
+
+        &__comment {
+          font-family: Roboto-Medium;
+          font-size: 20px;
+        }
+
+        &__area {
+          width: 100%;
+          height: 120px;
+          margin: 8px 25px 0;
+          padding: 8px 16px;
+          border: 0;
+          resize: none;
+          font-family: Roboto-Regular;
+          font-size: 16px;
+          line-height: 24px;
+        }
+      }
+
+      &__action {
+        margin-top: auto;
+        width: 100%;
+
+        &__button {
+          cursor: pointer;
+          display: inline-block;
+          width: 50%;
+          height: 60px;
+          font-family: Roboto-Regular;
+          font-size: 24px;
+          text-align: center;
+          border: 0;
+          &:focus {
+            outline: 0;
+          }
+
+          &__cancel {
+            background: white;
+            color: #D0021B;
+          }
+
+          &__save {
+            background: #4A90E2;
+            color: white;
+          }
+
+          &__icon {
+            width: 14px;
+            margin-right: 14px;
+          }
         }
       }
     }

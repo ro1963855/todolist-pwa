@@ -22,7 +22,6 @@ export default class Header extends Vue {
   @Prop() private currentTab!: string;
 
   public test(tab: string): void {
-    console.log(tab);
     this.$emit('update:currentTab', tab);
   }
 }

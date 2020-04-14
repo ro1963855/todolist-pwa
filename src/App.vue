@@ -4,21 +4,24 @@
     <div class="main">
       <ul class="list">
         <Task
-          v-for="task in tasks"
+          v-for="task in showTasks"
+          :id="task.id"
           :key="`main${_uid}_${task.id}`"
-          :title.sync="task.title"
-          :isFinished.sync="task.isFinished"
-          :isFavorite.sync="task.isFavorite"
+          :title="task.title"
+          :description="task.description"
+          :isFinished="task.isFinished"
+          :isFavorite="task.isFavorite"
+          @update:attribute="changeTaskAttribute"
         />
       </ul>
-      <div class="task_counter">{{ taskCount }} tasks left</div>
+      <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import axios from 'axios';
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Watch, Vue } from 'vue-property-decorator';
 import Header from './components/Header.vue';
 import Task from './components/Task.vue';
 
@@ -35,17 +38,53 @@ export default class App extends Vue {
 
   private tasks: Array<object> = []
 
-  get taskCount(): number {
-    return this.tasks.length;
+  private isLoading = true
+
+  get taskCount(): string {
+    if (this.currentTab === 'Completed') {
+      return `${this.showTasks.length} task completed`;
+    }
+
+    return `${this.showTasks.length} tasks left`;
+  }
+
+  get showTasks(): Array<object> {
+    if (this.currentTab === 'My Tasks') {
+      return this.tasks;
+    }
+
+    if (this.currentTab === 'In Progress') {
+      return this.tasks.filter((task) => !task.isFinished);
+    }
+
+    if (this.currentTab === 'Completed') {
+      return this.tasks.filter((task) => task.isFinished);
+    }
+
+    return this.tasks;
   }
 
   created() {
     [this.currentTab] = this.tabs;
     axios.get('http://localhost:3000/tasks')
       .then((response) => {
-        console.log(response.data);
         this.tasks = response.data;
+      })
+      .finally(() => {
+        this.isLoading = false;
       });
+  }
+
+  private changeTaskAttribute(id: string, attribute: string, newValue: any) {
+    const updagteTask = this.tasks.find((task) => task.id === id);
+    updagteTask[attribute] = newValue;
+    axios.patch(
+      `http://localhost:3000/tasks/${id}`,
+      {
+        [attribute]: newValue,
+        updateTime: new Date().getTime(),
+      },
+    );
   }
 }
 </script>
