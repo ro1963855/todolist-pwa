@@ -16,7 +16,7 @@
         @click="changeFavorite(true)"
       />
       <font-awesome-icon
-        v-else
+        v-if="isFavorite"
         class="tl-task__header__icon tl-task__header__favorite"
         :class="{'tl-task__header__favorite--active': isFavorite}"
         icon="star"
@@ -29,6 +29,7 @@
         @click="isEdit = !isEdit"
       />
       <font-awesome-icon
+        v-if="!isAddMode"
         class="tl-task__header__icon"
         icon="trash-alt"
         @click="delte"
@@ -44,6 +45,7 @@
           ref="textarea"
           class="tl-task__content__wrapper__area"
           :value="description"
+          @change="changeDescription"
         ></textarea>
       </div>
       <div class="tl-task__content__action">
@@ -59,7 +61,7 @@
           @click="save"
         >
           <font-awesome-icon class="tl-task__content__action__button__icon" icon="plus"/>
-          Save
+          {{ isAddMode ? 'Add Task' : 'Save' }}
         </button>
       </div>
     </div>
@@ -86,6 +88,8 @@ export default class Task extends Vue {
 
   @Prop() private isFinished!: boolean;
 
+  @Prop({ default: false }) private isAddMode!: boolean;
+
   private isEdit = false;
 
   private changeFavorite(isFavorite: boolean) {
@@ -100,13 +104,26 @@ export default class Task extends Vue {
     this.$emit('update:attribute', this.id, 'title', event.target.value);
   }
 
+  private changeDescription(event: any) {
+    if (this.isAddMode) {
+      this.$emit('update:attribute', this.id, 'description', event.target.value);
+    }
+  }
+
   private cancel() {
     this.isEdit = false;
+    if (this.isAddMode) {
+      this.$emit('reset:task');
+    }
   }
 
   private save() {
     this.isEdit = false;
-    this.$emit('update:attribute', this.id, 'description', this.$refs.textarea.value);
+    if (this.isAddMode) {
+      this.$emit('add:task');
+    } else {
+      this.$emit('update:attribute', this.id, 'description', this.$refs.textarea.value);
+    }
   }
 
   private delte() {

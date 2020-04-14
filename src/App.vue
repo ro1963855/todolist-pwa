@@ -1,12 +1,24 @@
 <template>
   <div id="app">
-    <Header :tabs="tabs" :currentTab.sync="currentTab"/>
+    <TlHeader :tabs="tabs" :currentTab.sync="currentTab"/>
     <div class="main">
       <ul class="list">
-        <Task
+        <TlTask
+          v-if="currentTab === 'My Tasks'"
+          :isAddMode="true"
+          :id="newTask.id"
+          :title="newTask.title"
+          :description="newTask.description"
+          :isFinished="newTask.isFinished"
+          :isFavorite="newTask.isFavorite"
+          @update:attribute="changeNewTaskAttribute"
+          @reset:task="newTask = { ...emptyTask }"
+          @add:task="addTask"
+        />
+        <TlTask
           v-for="task in showTasks"
-          :id="task.id"
           :key="`main${_uid}_${task.id}`"
+          :id="task.id"
           :title="task.title"
           :description="task.description"
           :isFinished="task.isFinished"
@@ -22,14 +34,23 @@
 
 <script lang="ts">
 import axios from 'axios';
-import { Component, Watch, Vue } from 'vue-property-decorator';
-import Header from './components/Header.vue';
-import Task from './components/Task.vue';
+import { Component, Vue } from 'vue-property-decorator';
+import TlHeader from './components/Header.vue';
+import TlTask from './components/Task.vue';
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  isFinished: boolean;
+  isFavorite: boolean;
+  updateTime: string;
+}
 
 @Component({
   components: {
-    Header,
-    Task,
+    TlHeader,
+    TlTask,
   },
 })
 export default class App extends Vue {
@@ -37,9 +58,27 @@ export default class App extends Vue {
 
   private currentTab = ''
 
-  private tasks: Array<object> = []
+  private tasks: Array<Task> = []
 
   private isLoading = true
+
+  private emptyTask: Task = {
+    id: '',
+    title: '',
+    description: '',
+    isFinished: false,
+    isFavorite: false,
+    updateTime: '',
+  };
+
+  private newTask: Task = {
+    id: '',
+    title: '',
+    description: '',
+    isFinished: false,
+    isFavorite: false,
+    updateTime: '',
+  };
 
   get taskCount(): string {
     if (this.currentTab === 'Completed') {
@@ -49,7 +88,7 @@ export default class App extends Vue {
     return `${this.showTasks.length} tasks left`;
   }
 
-  get showTasks(): Array<object> {
+  get showTasks(): Array<Task> {
     if (this.currentTab === 'My Tasks') {
       return this.tasks;
     }
@@ -83,14 +122,27 @@ export default class App extends Vue {
       `http://localhost:3000/tasks/${id}`,
       {
         [attribute]: newValue,
-        updateTime: new Date().getTime(),
+        updateTime: new Date().getTime().toString(),
       },
     );
+  }
+
+  private changeNewTaskAttribute(id: string, attribute: string, newValue: any) {
+    this.newTask[attribute] = newValue;
   }
 
   private deleteTask(id: string) {
     this.tasks = this.tasks.filter((task) => task.id !== id);
     axios.delete(`http://localhost:3000/tasks/${id}`);
+  }
+
+  private addTask() {
+    const currentTimestamp = new Date().getTime().toString();
+    this.newTask.id = currentTimestamp;
+    this.newTask.updateTime = currentTimestamp;
+    this.tasks = [...this.tasks, this.newTask];
+    axios.post('http://localhost:3000/tasks', this.newTask);
+    this.newTask = { ...this.emptyTask };
   }
 }
 </script>
