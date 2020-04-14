@@ -11,22 +11,27 @@
       >
       <font-awesome-icon
         v-if="!isFavorite"
-        class="tl-task__header__favorite"
+        class="tl-task__header__icon tl-task__header__favorite"
         :icon="['far', 'star']"
         @click="changeFavorite(true)"
       />
       <font-awesome-icon
         v-else
-        class="tl-task__header__favorite"
+        class="tl-task__header__icon tl-task__header__favorite"
         :class="{'tl-task__header__favorite--active': isFavorite}"
         icon="star"
         @click="changeFavorite(false)"
       />
       <font-awesome-icon
-        class="tl-task__header__edit"
+        class="tl-task__header__icon tl-task__header__edit"
         :class="{'tl-task__header__edit--active': isEdit}"
         icon="pencil-alt"
         @click="isEdit = !isEdit"
+      />
+      <font-awesome-icon
+        class="tl-task__header__icon"
+        icon="trash-alt"
+        @click="delte"
       />
     </div>
     <div class="tl-task__content">
@@ -103,6 +108,12 @@ export default class Task extends Vue {
     this.isEdit = false;
     this.$emit('update:attribute', this.id, 'description', this.$refs.textarea.value);
   }
+
+  private delte() {
+    if (confirm('Are you sure?')) {
+      this.$emit('delete:task', this.id);
+    }
+  }
 }
 </script>
 
@@ -147,15 +158,17 @@ export default class Task extends Vue {
         }
       }
 
-      &__favorite, &__edit {
+      &__icon {
         height: 24px;
         width: 24px;
         cursor: pointer;
+        & + & {
+          margin-left: 32px;
+        }
       }
 
       &__favorite {
         margin-left: auto;
-        margin-right: 32px;
         &--active {
           color: #F5A623;
         }

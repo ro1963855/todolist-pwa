@@ -6,7 +6,7 @@
         :class="{'tl-header__tabs__item--active': currentTab === tab}"
         v-for="tab in tabs"
         :key="`header_${tab}`"
-        @click="test(tab)"
+        @click="changeTab(tab)"
       >{{ tab }}</li>
     </ul>
   </nav>
@@ -21,7 +21,7 @@ export default class Header extends Vue {
 
   @Prop() private currentTab!: string;
 
-  public test(tab: string): void {
+  public changeTab(tab: string): void {
     this.$emit('update:currentTab', tab);
   }
 }

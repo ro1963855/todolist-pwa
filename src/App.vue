@@ -12,6 +12,7 @@
           :isFinished="task.isFinished"
           :isFavorite="task.isFavorite"
           @update:attribute="changeTaskAttribute"
+          @delete:task="deleteTask"
         />
       </ul>
       <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
@@ -85,6 +86,11 @@ export default class App extends Vue {
         updateTime: new Date().getTime(),
       },
     );
+  }
+
+  private deleteTask(id: string) {
+    this.tasks = this.tasks.filter((task) => task.id !== id);
+    axios.delete(`http://localhost:3000/tasks/${id}`);
   }
 }
 </script>
