@@ -7,11 +7,10 @@
           v-if="currentTab === 'My Tasks'"
           :isAddMode="true"
           :id="newTask.id"
-          :title="newTask.title"
-          :description="newTask.description"
-          :isFinished="newTask.isFinished"
-          :isFavorite="newTask.isFavorite"
-          @update:attribute="changeNewTaskAttribute"
+          :title.sync="newTask.title"
+          :description.sync="newTask.description"
+          :isFinished.sync="newTask.isFinished"
+          :isFavorite.sync="newTask.isFavorite"
           @reset:task="newTask = { ...emptyTask }"
           @add:task="addTask"
         />
@@ -19,11 +18,10 @@
           v-for="task in showTasks"
           :key="`main${_uid}_${task.id}`"
           :id="task.id"
-          :title="task.title"
-          :description="task.description"
-          :isFinished="task.isFinished"
-          :isFavorite="task.isFavorite"
-          @update:attribute="changeTaskAttribute"
+          :title.sync="task.title"
+          :description.sync="task.description"
+          :isFinished.sync="task.isFinished"
+          :isFavorite.sync="task.isFavorite"
           @delete:task="deleteTask"
         />
       </ul>
@@ -109,26 +107,22 @@ export default class App extends Vue {
     axios.get('http://localhost:3000/tasks')
       .then((response) => {
         this.tasks = response.data;
+        this.tasks.forEach((task) => {
+          this.$watch(() => task, this.syncTaskToDatabase, { deep: true });
+        });
       })
       .finally(() => {
         this.isLoading = false;
       });
   }
 
-  private changeTaskAttribute(id: string, attribute: string, newValue: any) {
-    const updagteTask = this.tasks.find((task) => task.id === id);
-    updagteTask[attribute] = newValue;
-    axios.patch(
-      `http://localhost:3000/tasks/${id}`,
-      {
-        [attribute]: newValue,
-        updateTime: new Date().getTime().toString(),
-      },
+  private syncTaskToDatabase(newVal: Task) {
+    const updateTask = { ...newVal };
+    updateTask.updateTime = new Date().getTime().toString();
+    axios.put(
+      `http://localhost:3000/tasks/${newVal.id}`,
+      updateTask,
     );
-  }
-
-  private changeNewTaskAttribute(id: string, attribute: string, newValue: any) {
-    this.newTask[attribute] = newValue;
   }
 
   private deleteTask(id: string) {
@@ -143,6 +137,7 @@ export default class App extends Vue {
     this.tasks = [...this.tasks, this.newTask];
     axios.post('http://localhost:3000/tasks', this.newTask);
     this.newTask = { ...this.emptyTask };
+    this.$watch(() => this.tasks[this.tasks.length - 1], this.syncTaskToDatabase, { deep: true });
   }
 }
 </script>

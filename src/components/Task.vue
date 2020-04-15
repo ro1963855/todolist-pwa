@@ -78,6 +78,10 @@ import CheckBox from './CheckBox.vue';
   },
 })
 export default class Task extends Vue {
+  $refs!: {
+    textarea: HTMLFormElement;
+  }
+
   @Prop() private id!: string;
 
   @Prop() private title!: string;
@@ -93,20 +97,20 @@ export default class Task extends Vue {
   private isEdit = false;
 
   private changeFavorite(isFavorite: boolean) {
-    this.$emit('update:attribute', this.id, 'isFavorite', isFavorite);
+    this.$emit('update:isFavorite', isFavorite);
   }
 
   private changeFinished(event: any) {
-    this.$emit('update:attribute', this.id, 'isFinished', event.target.checked);
+    this.$emit('update:isFinished', event.target.checked);
   }
 
   private changeTitle(event: any) {
-    this.$emit('update:attribute', this.id, 'title', event.target.value);
+    this.$emit('update:title', event.target.value);
   }
 
   private changeDescription(event: any) {
     if (this.isAddMode) {
-      this.$emit('update:attribute', this.id, 'description', event.target.value);
+      this.$emit('update:description', event.target.value);
     }
   }
 
@@ -122,7 +126,7 @@ export default class Task extends Vue {
     if (this.isAddMode) {
       this.$emit('add:task');
     } else {
-      this.$emit('update:attribute', this.id, 'description', this.$refs.textarea.value);
+      this.$emit('update:description', this.$refs.textarea.value);
     }
   }
 

@@ -10,6 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Vue from 'vue';
 import App from './App.vue';
+import './registerServiceWorker';
 import store from './store';
 
 library.add(farStar, farCommentDots, faStar, faPencilAlt, faTimes, faPlus, faTrashAlt);
