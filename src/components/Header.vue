@@ -44,13 +44,22 @@ export default class Header extends Vue {
       &__item {
         cursor: pointer;
         display: inline-block;
-        width: 220px;
         text-align: center;
         line-height: $height;
-        font-family: Roboto-Medium;
-        font-size: 24px;
         color: #00408B;
         text-align: center;
+        width: 100px;
+        transition: width 0.4s;
+
+        @media (min-width: 576px) {
+          font-size: 20px;
+          width: 160px;
+        }
+
+        @media (min-width: 768px) {
+          font-size: 24px;
+          width: 220px;
+        }
 
         &--active {
           color: #FFFFFF;
@@ -58,11 +67,20 @@ export default class Header extends Vue {
           &::after {
             display: block;
             content: '';
-            width: 160px;
+            width: 60px;
             height: 5px;
             background: #00408B;
             margin: 0 auto;
             transform: translate(0, -5px);
+            transition: width 0.4s;
+
+            @media (min-width: 576px) {
+              width: 130px;
+            }
+
+            @media (min-width: 768px) {
+              width: 160px;
+            }
           }
         }
       }

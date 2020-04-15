@@ -143,7 +143,9 @@ export default class App extends Vue {
 </script>
 
 <style lang="scss">
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -159,13 +161,13 @@ body {
 .list {
   list-style-type: none;
   margin: 0;
+  padding: 0 40px;
   & > .tl-task + .tl-task {
     margin-top: 24px;
   }
 }
 
 .task_counter {
-  font-family: Roboto-Italic;
   font-style: italic;
   font-size: 24px;
   color: #C8C8C8;

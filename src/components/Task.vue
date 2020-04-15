@@ -157,21 +157,37 @@ export default class Task extends Vue {
       height: 76px;
       width: 100%;
       background: #F2F2F2;
-      padding: 24px 32px;
+      padding: 8px 16px;
+      transition: padding 0.4s;
+
+      @media (min-width: 576px) {
+        padding: 12px 20px;
+      }
+
+      @media (min-width: 768px) {
+        padding: 24px 32px;
+      }
 
       > .tl-checkbox {
         margin-right: 16px;
       }
 
       &__title {
-        font-family: Roboto-Medium;
-        font-size: 24px;
+        font-size: 16px;
         color: black;
         width: 100%;
         margin-right: 16px;
         height: 28px;
         border: 0;
         background: transparent;
+
+      @media (min-width: 576px) {
+        font-size: 20px;
+      }
+
+      @media (min-width: 768px) {
+        font-size: 24px;
+      }
 
         &--finished {
           color: #9B9B9B;
@@ -184,7 +200,16 @@ export default class Task extends Vue {
         width: 24px;
         cursor: pointer;
         & + & {
-          margin-left: 32px;
+          margin-left: 8px;
+          transition: margin-left 0.4s;
+
+          @media (min-width: 576px) {
+            margin-left: 20px;
+          }
+
+          @media (min-width: 768px) {
+            margin-left: 32px;
+          }
         }
       }
 
@@ -213,21 +238,28 @@ export default class Task extends Vue {
 
       &__wrapper {
         height: 100%;
-        padding: 24px 72px 0;
+        padding: 24px 36px;
+        transition: padding 0.4s;
+
+        @media (min-width: 576px) {
+          padding: 24px 48px;
+        }
+
+        @media (min-width: 768px) {
+          padding: 24px 60px;
+        }
 
         &__comment {
-          font-family: Roboto-Medium;
           font-size: 20px;
         }
 
         &__area {
           width: 100%;
           height: 120px;
-          margin: 8px 25px 0;
           padding: 8px 16px;
           border: 0;
+          margin-top: 8px;
           resize: none;
-          font-family: Roboto-Regular;
           font-size: 16px;
           line-height: 24px;
         }
@@ -242,10 +274,18 @@ export default class Task extends Vue {
           display: inline-block;
           width: 50%;
           height: 60px;
-          font-family: Roboto-Regular;
-          font-size: 24px;
+          font-size: 16px;
           text-align: center;
           border: 0;
+
+          @media (min-width: 576px) {
+            font-size: 20px;
+          }
+
+          @media (min-width: 768px) {
+            font-size: 24px;
+          }
+
           &:focus {
             outline: 0;
           }
@@ -262,7 +302,11 @@ export default class Task extends Vue {
 
           &__icon {
             width: 14px;
-            margin-right: 14px;
+            margin-right: 4px;
+
+            @media (min-width: 768px) {
+              margin-right: 14px;
+            }
           }
         }
       }
