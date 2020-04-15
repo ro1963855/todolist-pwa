@@ -104,7 +104,7 @@ export default class App extends Vue {
 
   created() {
     [this.currentTab] = this.tabs;
-    axios.get('http://localhost:3000/tasks')
+    axios.get('/api/tasks')
       .then((response) => {
         this.tasks = response.data;
         this.tasks.forEach((task) => {
@@ -120,14 +120,14 @@ export default class App extends Vue {
     const updateTask = { ...newVal };
     updateTask.updateTime = new Date().getTime().toString();
     axios.put(
-      `http://localhost:3000/tasks/${newVal.id}`,
+      `/api/tasks/${newVal.id}`,
       updateTask,
     );
   }
 
   private deleteTask(id: string) {
     this.tasks = this.tasks.filter((task) => task.id !== id);
-    axios.delete(`http://localhost:3000/tasks/${id}`);
+    axios.delete(`/api/tasks/${id}`);
   }
 
   private addTask() {
@@ -135,7 +135,7 @@ export default class App extends Vue {
     this.newTask.id = currentTimestamp;
     this.newTask.updateTime = currentTimestamp;
     this.tasks = [...this.tasks, this.newTask];
-    axios.post('http://localhost:3000/tasks', this.newTask);
+    axios.post('/api/tasks', this.newTask);
     this.newTask = { ...this.emptyTask };
     this.$watch(() => this.tasks[this.tasks.length - 1], this.syncTaskToDatabase, { deep: true });
   }

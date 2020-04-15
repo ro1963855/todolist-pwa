@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build && cp -R heroku/ dist && cp db.json dist/db.json",
     "lint": "vue-cli-service lint",
     "dev": "json-server --watch db.json & vue-cli-service serve",
     "db": "json-server --watch db.json"
