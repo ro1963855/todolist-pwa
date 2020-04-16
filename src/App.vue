@@ -32,6 +32,7 @@
 
 <script lang="ts">
 import axios from 'axios';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { Component, Vue } from 'vue-property-decorator';
 import TlHeader from './components/Header.vue';
 import TlTask from './components/Task.vue';
@@ -42,7 +43,24 @@ interface Task {
   description: string;
   isFinished: boolean;
   isFavorite: boolean;
+  isRemoved: boolean;
   updateTime: string;
+}
+
+interface IndexedDBTask extends DBSchema {
+  tasks: {
+    value: {
+      id: string;
+      title: string;
+      description: string;
+      isFinished: boolean;
+      isFavorite: boolean;
+      updateTime: string;
+      isRemoved: boolean;
+    };
+    key: string;
+    indexes: { 'by-id': string };
+  };
 }
 
 @Component({
@@ -66,6 +84,7 @@ export default class App extends Vue {
     description: '',
     isFinished: false,
     isFavorite: false,
+    isRemoved: false,
     updateTime: '',
   };
 
@@ -75,8 +94,11 @@ export default class App extends Vue {
     description: '',
     isFinished: false,
     isFavorite: false,
+    isRemoved: false,
     updateTime: '',
   };
+
+  private db!: IDBPDatabase<IndexedDBTask>;
 
   get taskCount(): string {
     if (this.currentTab === 'Completed') {
@@ -88,25 +110,33 @@ export default class App extends Vue {
 
   get showTasks(): Array<Task> {
     if (this.currentTab === 'My Tasks') {
-      return this.tasks;
+      return this.tasks.filter((task) => !task.isRemoved).sort(this.sortById);
     }
 
     if (this.currentTab === 'In Progress') {
-      return this.tasks.filter((task) => !task.isFinished);
+      return this.tasks.filter((task) => !task.isFinished && !task.isRemoved).sort(this.sortById);
     }
 
     if (this.currentTab === 'Completed') {
-      return this.tasks.filter((task) => task.isFinished);
+      return this.tasks.filter((task) => task.isFinished && !task.isRemoved).sort(this.sortById);
     }
 
-    return this.tasks;
+    return this.tasks.filter((task) => !task.isRemoved).sort(this.sortById);
   }
 
-  created() {
+  async created() {
     [this.currentTab] = this.tabs;
+    this.db = await this.initIndexedDB();
+    const indexDBTasks = await this.db.getAll('tasks');
     axios.get('/api/tasks')
-      .then((response) => {
-        this.tasks = response.data;
+      .then(async (response) => {
+        this.tasks = await this.syncIndexDBAndServerDB(response.data, indexDBTasks);
+        this.tasks.forEach((task) => {
+          this.$watch(() => task, this.syncTaskToDatabase, { deep: true });
+        });
+      })
+      .catch(() => {
+        this.tasks = indexDBTasks;
         this.tasks.forEach((task) => {
           this.$watch(() => task, this.syncTaskToDatabase, { deep: true });
         });
@@ -116,28 +146,76 @@ export default class App extends Vue {
       });
   }
 
-  private syncTaskToDatabase(newVal: Task) {
+  private sortById(a: Task, b: Task) {
+    return parseInt(a.id, 10) - parseInt(b.id, 10);
+  }
+
+  private async syncTaskToDatabase(newVal: Task) {
     const updateTask = { ...newVal };
     updateTask.updateTime = new Date().getTime().toString();
-    axios.put(
-      `/api/tasks/${newVal.id}`,
-      updateTask,
-    );
+    await axios.put(`/api/tasks/${newVal.id}`, updateTask)
+      .catch(() => console.error('no network!'))
+      .finally(async () => {
+        await this.db.put('tasks', updateTask);
+      });
   }
 
   private deleteTask(id: string) {
-    this.tasks = this.tasks.filter((task) => task.id !== id);
-    axios.delete(`/api/tasks/${id}`);
+    const currentTask = this.tasks.find((task) => task.id === id);
+    if (currentTask !== undefined) {
+      currentTask.isRemoved = true;
+    }
   }
 
-  private addTask() {
+  private async addTask() {
     const currentTimestamp = new Date().getTime().toString();
     this.newTask.id = currentTimestamp;
     this.newTask.updateTime = currentTimestamp;
     this.tasks = [...this.tasks, this.newTask];
-    axios.post('/api/tasks', this.newTask);
-    this.newTask = { ...this.emptyTask };
-    this.$watch(() => this.tasks[this.tasks.length - 1], this.syncTaskToDatabase, { deep: true });
+    await axios.post('/api/tasks', this.newTask).catch(() => console.error('no network!')).finally(async () => {
+      await this.db.put('tasks', this.newTask);
+      this.newTask = { ...this.emptyTask };
+      this.$watch(() => this.tasks[this.tasks.length - 1], this.syncTaskToDatabase, { deep: true });
+    });
+  }
+
+  private initIndexedDB() {
+    return openDB<IndexedDBTask>('todolist', 1, {
+      upgrade(db) {
+        const taskStore = db.createObjectStore('tasks', {
+          keyPath: 'id',
+        });
+
+        taskStore.createIndex('by-id', 'id');
+      },
+    });
+  }
+
+  private async syncIndexDBAndServerDB(serverData: Array<Task>, indexDBData: Array<Task>) {
+    const tasks = [...serverData];
+    indexDBData.forEach(async (indexDBtask, index) => {
+      const serverTask = tasks.find((data) => data.id === indexDBtask.id);
+      if (serverTask !== undefined) {
+        if (serverTask.updateTime > indexDBtask.updateTime) {
+          await this.db.put('tasks', serverTask);
+        } else if (serverTask.updateTime < indexDBtask.updateTime) {
+          tasks[index] = indexDBtask;
+          await axios.put(`/api/tasks/${indexDBtask.id}`, indexDBtask).catch(() => console.error('no network!'));
+        }
+      } else {
+        tasks.push(indexDBtask);
+        await axios.post('/api/tasks', indexDBtask).catch(() => console.error('no network!'));
+      }
+    });
+
+    tasks.forEach(async (task) => {
+      const indexDBtask = indexDBData.find((data) => data.id === task.id);
+      if (indexDBtask === undefined) {
+        this.db.put('tasks', task);
+      }
+    });
+
+    return tasks;
   }
 }
 </script>
