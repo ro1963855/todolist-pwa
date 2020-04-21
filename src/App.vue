@@ -27,6 +27,9 @@
       </ul>
       <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
     </div>
+    <footer class="footer">
+      <span class="footer__copyright">Copyright © 2020 Dandy v1.0</span>
+    </footer>
   </div>
 </template>
 
@@ -254,4 +257,19 @@ body {
   padding-left: 33px;
   margin-top: 8px;
 }
+
+.footer {
+  position: static;
+  bottom: 0;
+  height: 40px;
+  font-size: 12px;
+  display: flex;
+
+  &__copyright {
+    margin-left: auto;
+    margin-top: auto;
+    margin-right: 40px;
+  }
+}
+
 </style>
