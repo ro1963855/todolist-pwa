@@ -28,6 +28,12 @@
       <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
     </div>
     <button
+      v-if="isNeedPormpt"
+      class="notify"
+    >
+      Add to Home Screen
+    </button>
+    <button
       v-if="updateExists"
       class="notify"
       @click="refreshApp"
@@ -110,11 +116,15 @@ export default class App extends Vue {
 
   private db!: IDBPDatabase<IndexedDBTask>;
 
-  private refreshing = false
+  private refreshing = false;
 
-  private registration = null
+  private registration = null;
 
-  private updateExists = false
+  private updateExists = false;
+
+  private prompt: any;
+
+  private isNeedPormpt = false;
 
   get taskCount(): string {
     if (this.currentTab === 'Completed') {
@@ -142,6 +152,48 @@ export default class App extends Vue {
 
   async created() {
     [this.currentTab] = this.tabs;
+    this.initServiceWorkerEvent();
+    this.getTaskDataFromDB();
+  }
+
+  private showRefreshUI(e: any) {
+    this.registration = e.detail;
+    this.updateExists = true;
+  }
+
+  private refreshApp() {
+    this.updateExists = false;
+    if (!this.registration || !(this.registration as any).waiting) { return; }
+    (this.registration as any).waiting.postMessage('skipWaiting');
+  }
+
+  private sortById(a: Task, b: Task) {
+    return parseInt(a.id, 10) - parseInt(b.id, 10);
+  }
+
+  private initServiceWorkerEvent() {
+    document.addEventListener(
+      'swUpdated', this.showRefreshUI, { once: true },
+    );
+
+    navigator.serviceWorker.addEventListener(
+      'controllerchange', () => {
+        if (this.refreshing) return;
+        this.refreshing = true;
+        window.location.reload();
+      },
+    );
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt Event fired');
+      e.preventDefault();
+      this.prompt = e;
+      this.isNeedPormpt = true;
+      return false;
+    });
+  }
+
+  private async getTaskDataFromDB() {
     this.db = await this.initIndexedDB();
     const indexDBTasks = await this.db.getAll('tasks');
     axios.get('/api/tasks')
@@ -160,32 +212,6 @@ export default class App extends Vue {
       .finally(() => {
         this.isLoading = false;
       });
-
-    document.addEventListener(
-      'swUpdated', this.showRefreshUI, { once: true },
-    );
-    navigator.serviceWorker.addEventListener(
-      'controllerchange', () => {
-        if (this.refreshing) return;
-        this.refreshing = true;
-        window.location.reload();
-      },
-    );
-  }
-
-  private showRefreshUI(e: any) {
-    this.registration = e.detail;
-    this.updateExists = true;
-  }
-
-  private refreshApp() {
-    this.updateExists = false;
-    if (!this.registration || !(this.registration as any).waiting) { return; }
-    (this.registration as any).waiting.postMessage('skipWaiting');
-  }
-
-  private sortById(a: Task, b: Task) {
-    return parseInt(a.id, 10) - parseInt(b.id, 10);
   }
 
   private async syncTaskToDatabase(newVal: Task) {
@@ -196,6 +222,27 @@ export default class App extends Vue {
       .finally(async () => {
         await this.db.put('tasks', updateTask);
       });
+  }
+
+  private addToScreen() {
+    if (this.isNeedPormpt) {
+      // The user has had a positive interaction with our app and Chrome
+      // has tried to prompt previously, so let's show the prompt.
+      this.prompt.prompt();
+
+      // 看看使用者針對這個 prompt 做了什麼回應
+      this.prompt.userChoice.then((choiceResult: any) => {
+        console.log(choiceResult.outcome);
+        if (choiceResult.outcome === 'dismissed') {
+          console.log('User cancelled home screen install');
+        } else {
+          console.log('User added to home screen');
+        }
+
+        this.prompt = null;
+        this.isNeedPormpt = false;
+      });
+    }
   }
 
   private deleteTask(id: string) {
