@@ -28,12 +28,6 @@
       <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
     </div>
     <button
-      v-if="isNeedPormpt"
-      class="notify"
-    >
-      Add to Home Screen
-    </button>
-    <button
       v-if="updateExists"
       class="notify"
       @click="refreshApp"
@@ -41,7 +35,7 @@
       New version available! Click to update
     </button>
     <footer class="footer">
-      <span class="footer__copyright">Copyright © 2020 Dandy v1.14</span>
+      <span class="footer__copyright">Copyright © 2020 Dandy v1.15</span>
     </footer>
   </div>
 </template>
@@ -122,10 +116,6 @@ export default class App extends Vue {
 
   private updateExists = false;
 
-  private prompt: any;
-
-  private isNeedPormpt = false;
-
   get taskCount(): string {
     if (this.currentTab === 'Completed') {
       return `${this.showTasks.length} task completed`;
@@ -183,14 +173,6 @@ export default class App extends Vue {
         window.location.reload();
       },
     );
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('beforeinstallprompt Event fired');
-      e.preventDefault();
-      this.prompt = e;
-      this.isNeedPormpt = true;
-      return false;
-    });
   }
 
   private async getTaskDataFromDB() {
@@ -222,27 +204,6 @@ export default class App extends Vue {
       .finally(async () => {
         await this.db.put('tasks', updateTask);
       });
-  }
-
-  private addToScreen() {
-    if (this.isNeedPormpt) {
-      // The user has had a positive interaction with our app and Chrome
-      // has tried to prompt previously, so let's show the prompt.
-      this.prompt.prompt();
-
-      // 看看使用者針對這個 prompt 做了什麼回應
-      this.prompt.userChoice.then((choiceResult: any) => {
-        console.log(choiceResult.outcome);
-        if (choiceResult.outcome === 'dismissed') {
-          console.log('User cancelled home screen install');
-        } else {
-          console.log('User added to home screen');
-        }
-
-        this.prompt = null;
-        this.isNeedPormpt = false;
-      });
-    }
   }
 
   private deleteTask(id: string) {
