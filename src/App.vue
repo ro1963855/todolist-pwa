@@ -27,8 +27,15 @@
       </ul>
       <div v-if="!isLoading" class="task_counter">{{ taskCount }}</div>
     </div>
+    <button
+      v-if="updateExists"
+      class="notify"
+      @click="refreshApp"
+    >
+      New version available! Click to update
+    </button>
     <footer class="footer">
-      <span class="footer__copyright">Copyright © 2020 Dandy v1.0</span>
+      <span class="footer__copyright">Copyright © 2020 Dandy v1.14</span>
     </footer>
   </div>
 </template>
@@ -103,6 +110,12 @@ export default class App extends Vue {
 
   private db!: IDBPDatabase<IndexedDBTask>;
 
+  private refreshing = false
+
+  private registration = null
+
+  private updateExists = false
+
   get taskCount(): string {
     if (this.currentTab === 'Completed') {
       return `${this.showTasks.length} task completed`;
@@ -147,6 +160,28 @@ export default class App extends Vue {
       .finally(() => {
         this.isLoading = false;
       });
+
+    document.addEventListener(
+      'swUpdated', this.showRefreshUI, { once: true },
+    );
+    navigator.serviceWorker.addEventListener(
+      'controllerchange', () => {
+        if (this.refreshing) return;
+        this.refreshing = true;
+        window.location.reload();
+      },
+    );
+  }
+
+  private showRefreshUI(e: any) {
+    this.registration = e.detail;
+    this.updateExists = true;
+  }
+
+  private refreshApp() {
+    this.updateExists = false;
+    if (!this.registration || !(this.registration as any).waiting) { return; }
+    (this.registration as any).waiting.postMessage('skipWaiting');
   }
 
   private sortById(a: Task, b: Task) {
@@ -258,9 +293,16 @@ body {
   margin-top: 8px;
 }
 
-.footer {
-  position: static;
+.notify {
+  position: sticky;
   bottom: 0;
+  width: 100%;
+  background-color: black;
+  color: white;
+  height: 30px;
+}
+
+.footer {
   height: 40px;
   font-size: 12px;
   display: flex;
